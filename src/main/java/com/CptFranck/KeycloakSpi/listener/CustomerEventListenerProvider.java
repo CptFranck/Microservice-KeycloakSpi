@@ -5,6 +5,8 @@ import org.keycloak.events.Event;
 import org.keycloak.events.EventListenerProvider;
 import org.keycloak.events.admin.AdminEvent;
 import org.keycloak.models.KeycloakSession;
+import org.keycloak.models.RealmModel;
+import org.keycloak.models.UserModel;
 
 public class CustomerEventListenerProvider implements EventListenerProvider {
 
@@ -19,12 +21,14 @@ public class CustomerEventListenerProvider implements EventListenerProvider {
 
     @Override
     public void onEvent(Event event) {
+
+        UserModel user = getUserModelFromEvent(event);
         switch (event.getType()) {
             case REGISTER:
-                customerClient.createCustomerFromKeycloak(event);
+                customerClient.createCustomerFromKeycloak(user.getId(), user.getUsername(), user.getEmail());
                 break;
             case UPDATE_PROFILE:
-                customerClient.updateCustomer(event);
+                customerClient.updateCustomer(user.getId(), user.getUsername(), user.getEmail());
                 break;
             case DELETE_ACCOUNT:
                 customerClient.deleteCustomer(event.getUserId());
@@ -41,4 +45,9 @@ public class CustomerEventListenerProvider implements EventListenerProvider {
 
     @Override
     public void close() {}
+
+    private UserModel getUserModelFromEvent(Event event){
+        RealmModel realm = session.realms().getRealm(event.getRealmId());
+        return session.users().getUserById(realm, event.getUserId());
+    }
 }
