@@ -19,7 +19,7 @@ public class CustomerEventListenerProviderFactory implements EventListenerProvid
 
     @Override
     public void init(Config.Scope scope) {
-        this.customerServiceUrl = System.getenv().getOrDefault("CUSTOMER_SERVICE_API_URL", "http://localhost:8080/api/events");
+        this.customerServiceUrl = System.getenv().getOrDefault("CUSTOMER_SERVICE_API_URL", "http://localhost:8086/api/v1");
     }
 
     @Override
