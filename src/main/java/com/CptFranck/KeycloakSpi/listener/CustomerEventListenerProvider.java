@@ -1,6 +1,7 @@
 package com.CptFranck.KeycloakSpi.listener;
 
 import com.CptFranck.KeycloakSpi.client.CustomerServiceClient;
+import lombok.extern.slf4j.Slf4j;
 import org.keycloak.events.Event;
 import org.keycloak.events.EventListenerProvider;
 import org.keycloak.events.admin.AdminEvent;
@@ -8,6 +9,7 @@ import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserModel;
 
+@Slf4j
 public class CustomerEventListenerProvider implements EventListenerProvider {
 
     private final KeycloakSession session;
@@ -25,12 +27,15 @@ public class CustomerEventListenerProvider implements EventListenerProvider {
         UserModel user = getUserModelFromEvent(event);
         switch (event.getType()) {
             case REGISTER:
+                log.info("REGISTER event : {}", event);
                 customerClient.createCustomerFromKeycloak(user.getId(), user.getUsername(), user.getEmail());
                 break;
             case UPDATE_PROFILE:
+                log.info("UPDATE_PROFILE event : {}", event);
                 customerClient.updateCustomer(user.getId(), user.getUsername(), user.getEmail());
                 break;
             case DELETE_ACCOUNT:
+                log.info("DELETE_ACCOUNT event : {}", event);
                 customerClient.deleteCustomer(event.getUserId());
                 break;
             default:
