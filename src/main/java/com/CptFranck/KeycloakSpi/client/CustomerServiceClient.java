@@ -5,14 +5,15 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 
 public class CustomerServiceClient {
 
-    private final HttpClient httpClient;
     private final String customerServiceUrl;
+    private final HttpClient httpClient;
 
     public CustomerServiceClient(String url) {
-        this.httpClient = HttpClient.newBuilder().build();
+        this.httpClient = HttpClient.newHttpClient();
         this.customerServiceUrl = url;
     }
 
@@ -37,26 +38,21 @@ public class CustomerServiceClient {
     }
 
     private void sendAsyncRequest(String path, String method, String body) {
-        try {
-            HttpRequest.Builder builder = HttpRequest.newBuilder()
-                    .uri(URI.create(customerServiceUrl + path))
-                    .header("Content-Type", "application/json");
+        HttpRequest.Builder builder = HttpRequest.newBuilder()
+                .uri(URI.create(customerServiceUrl + path))
+                .header("Content-Type", "application/json");
 
-            if (body != null)
-                builder.method(method, HttpRequest.BodyPublishers.ofString(body));
-            else
-                builder.method(method, HttpRequest.BodyPublishers.noBody());
+        if (body != null)
+            builder.method(method, HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8));
+        else
+            builder.method(method, HttpRequest.BodyPublishers.noBody());
 
-            httpClient.sendAsync(builder.build(), HttpResponse.BodyHandlers.ofString())
-                    .thenAccept(response ->
-                            System.out.println("CustomerService [" + method + " " + path + "] → " + response.statusCode()))
-                    .exceptionally(ex -> {
-                        System.err.println("Error calling customer service: " + ex.getMessage());
-                        return null;
-                    });
-
-        } catch (Exception e) {
-            System.err.println("Error preparing request: " + e.getMessage());
-        }
+        httpClient.sendAsync(builder.build(), HttpResponse.BodyHandlers.ofString())
+                .whenComplete((response, throwable) -> {
+                    if (throwable != null)
+                        System.err.println("Error calling customer service: " + throwable.getMessage());
+                    else
+                        System.out.println("CustomerService [" + method + " " + path + "] → " + response.statusCode());
+                });
     }
 }
