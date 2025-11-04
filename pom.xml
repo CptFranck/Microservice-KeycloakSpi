@@ -6,6 +6,7 @@
     <groupId>org.CptFranck</groupId>
     <artifactId>keycloak-spi</artifactId>
     <version>1.0.0</version>
+    <name>KeycloakSpi</name>
     <description>Micro Services - Keycloak SPI</description>
     <packaging>jar</packaging>
     <properties>
@@ -36,8 +37,9 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.14.1</version>
                 <configuration>
-                    <source>21</source>
-                    <target>21</target>
+                    <release>17</release>
+<!--                    <source>21</source>-->
+<!--                    <target>21</target>-->
                 </configuration>
             </plugin>
         </plugins>
