@@ -9,20 +9,21 @@ import org.keycloak.models.KeycloakSessionFactory;
 
 public class CustomerEventListenerProviderFactory implements EventListenerProviderFactory {
 
+    private String customerServiceUrl;
+
     @Override
     public EventListenerProvider create(KeycloakSession keycloakSession) {
-        CustomerServiceClient client = new CustomerServiceClient("http://customer-service:8080/api/customers");
+        CustomerServiceClient client = new CustomerServiceClient(customerServiceUrl);
         return new CustomerEventListenerProvider(keycloakSession, client);
     }
 
     @Override
     public void init(Config.Scope scope) {
-
+        this.customerServiceUrl = System.getenv().getOrDefault("CUSTOMER_SERVICE_API_URL", "http://localhost:8080/api/events");
     }
 
     @Override
     public void postInit(KeycloakSessionFactory keycloakSessionFactory) {
-
     }
 
     @Override
