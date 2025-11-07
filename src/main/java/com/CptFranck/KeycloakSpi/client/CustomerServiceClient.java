@@ -1,6 +1,11 @@
 package com.CptFranck.KeycloakSpi.client;
 
 
+import com.CptFranck.dto.KeycloakUserDto;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.keycloak.models.UserModel;
+
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -17,23 +22,34 @@ public class CustomerServiceClient {
         this.customerServiceUrl = url;
     }
 
-    public void createCustomerFromKeycloak(String id, String username, String email) {
-        String json = customerToJson(id, username, email);
+    public void createCustomerFromKeycloak(UserModel user) {
+        String json = JsonFromUserModel(user);
         sendAsyncRequest("/customers", "POST", json);
     }
 
-    public void updateCustomer(String id, String username, String email) {
-        String json = customerToJson(id, username, email);
-        sendAsyncRequest("/customers/" + id, "PUT", json);
+    public void updateCustomer(UserModel user) {
+        String json = JsonFromUserModel(user);
+        sendAsyncRequest("/customers/" + user.getId(), "PUT", json);
     }
 
     public void deleteCustomer(String userId) {
         sendAsyncRequest("/customers/" + userId, "DELETE", null);
     }
 
-    private String customerToJson(String id, String username, String email){
-        return String.format("{\"keycloakId\":\"%s\",\"username\":\"%s\",\"email\":\"%s\"}",
-                id, username, email);
+    private String JsonFromUserModel(UserModel user){
+        KeycloakUserDto keycloakUserDto = KeycloakUserDto.builder()
+                .keycloakId(user.getId())
+                .username(user.getUsername())
+                .email(user.getEmail())
+                .firstname(user.getFirstName())
+                .lastname(user.getLastName())
+                .build();
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            return mapper.writeValueAsString(keycloakUserDto);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Can't serialize keycloak user dto", e);
+        }
     }
 
     private void sendAsyncRequest(String path, String method, String body) {
