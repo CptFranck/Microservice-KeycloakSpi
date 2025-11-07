@@ -37,6 +37,7 @@ public class CustomerServiceClient {
     }
 
     private String JsonFromUserModel(UserModel user){
+
         KeycloakUserDto keycloakUserDto = KeycloakUserDto.builder()
                 .keycloakId(user.getId())
                 .username(user.getUsername())
@@ -44,6 +45,7 @@ public class CustomerServiceClient {
                 .firstname(user.getFirstName())
                 .lastname(user.getLastName())
                 .build();
+
         ObjectMapper mapper = new ObjectMapper();
         try {
             return mapper.writeValueAsString(keycloakUserDto);
