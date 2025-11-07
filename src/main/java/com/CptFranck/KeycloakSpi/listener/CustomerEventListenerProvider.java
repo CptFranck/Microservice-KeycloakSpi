@@ -25,13 +25,13 @@ public class CustomerEventListenerProvider implements EventListenerProvider {
         UserModel user = getUserModelFromEvent(event);
         switch (event.getType()) {
             case REGISTER:
-                customerClient.createCustomerFromKeycloak(user.getId(), user.getUsername(), user.getEmail());
+                customerClient.createCustomerFromKeycloak(user);
                 break;
             case UPDATE_PROFILE:
-                customerClient.updateCustomer(user.getId(), user.getUsername(), user.getEmail());
+                customerClient.updateCustomer(user);
                 break;
             case DELETE_ACCOUNT:
-                customerClient.deleteCustomer(event.getUserId());
+                customerClient.deleteCustomer(user.getId());
                 break;
             default:
                 break;
@@ -41,15 +41,15 @@ public class CustomerEventListenerProvider implements EventListenerProvider {
     @Override
     public void onEvent(AdminEvent adminEvent, boolean b) {
 
-        if (!"USER".equals(adminEvent.getResourceType().name())) return;
-        String userId = adminEvent.getResourcePath().replace("users/", "");
+        if (!adminEvent.getResourceType().name().equals("USER")) return;
 
+        String userId = adminEvent.getResourcePath().replace("users/", "");
         switch (adminEvent.getOperationType()) {
             case UPDATE:
-                UserModel user = session.users().getUserById(
-                        session.realms().getRealm(adminEvent.getRealmId()), userId);
+                UserModel user = session.users().getUserById(session.realms().getRealm(adminEvent.getRealmId()),
+                                                             userId);
                 if (user != null)
-                    customerClient.updateCustomer(user.getId(), user.getUsername(), user.getEmail());
+                    customerClient.updateCustomer(user);
                 else
                     System.out.println("user with id " + userId + " is null, cannot update customer");
                 break;
