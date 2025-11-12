@@ -24,16 +24,16 @@ public class CustomerServiceClient {
 
     public void createCustomerFromKeycloak(UserModel user) {
         String json = JsonFromUserModel(user);
-        sendAsyncRequest("/customers", "POST", json);
+        sendAsyncRequest("/keycloak-event/new-customer", "POST", json);
     }
 
     public void updateCustomer(UserModel user) {
         String json = JsonFromUserModel(user);
-        sendAsyncRequest("/customers/" + user.getId(), "PUT", json);
+        sendAsyncRequest("/keycloak-event/update-customer", "PUT", json);
     }
 
     public void deleteCustomer(String userId) {
-        sendAsyncRequest("/customers/" + userId, "DELETE", null);
+        sendAsyncRequest("/keycloak-event/delete-customer/" + userId, "DELETE", null);
     }
 
     private String JsonFromUserModel(UserModel user){
