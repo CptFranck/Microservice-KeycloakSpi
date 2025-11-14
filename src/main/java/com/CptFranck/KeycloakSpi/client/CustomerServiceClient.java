@@ -3,14 +3,12 @@ package com.CptFranck.KeycloakSpi.client;
 
 import com.CptFranck.dto.KeycloakUserDto;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.json.Json;
-import jakarta.json.JsonObject;
 import org.keycloak.models.UserModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.StringReader;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -19,19 +17,24 @@ import java.nio.charset.StandardCharsets;
 
 public class CustomerServiceClient {
 
-    private static final Logger log = LoggerFactory.getLogger(CustomerServiceClient.class);
+    private final Logger log;
+    private final ObjectMapper mapper;
+    private final HttpClient httpClient;
+
     private final String jwtUri;
     private final String clientId;
     private final String clientSecret;
     private final String customerServiceUrl;
-    private final HttpClient httpClient;
 
-    public CustomerServiceClient(String tokenUrl, String clientId, String clientSecret, String url) {
-        this.jwtUri = tokenUrl;
+    public CustomerServiceClient(String jwtUri, String clientId, String clientSecret, String url) {
+        this.log = LoggerFactory.getLogger(CustomerServiceClient.class);
+        this.mapper = new ObjectMapper();
+        this.httpClient = HttpClient.newHttpClient();
+
+        this.jwtUri = jwtUri;
         this.clientId = clientId;
         this.clientSecret = clientSecret;
         this.customerServiceUrl = url;
-        this.httpClient = HttpClient.newHttpClient();
     }
 
     public void createCustomerFromKeycloak(UserModel user) {
@@ -57,8 +60,6 @@ public class CustomerServiceClient {
                 .firstname(user.getFirstName())
                 .lastname(user.getLastName())
                 .build();
-
-        ObjectMapper mapper = new ObjectMapper();
         try {
             return mapper.writeValueAsString(keycloakUserDto);
         } catch (JsonProcessingException e) {
@@ -85,28 +86,30 @@ public class CustomerServiceClient {
             if (response.statusCode() != 200)
                 log.error("Failed : HTTP error code : {}", response.statusCode());
         } catch (Exception e) {
-            System.err.println(e.getMessage());
+            log.error(e.getMessage());
         }
     }
 
-    private String getAccessToken() throws Exception {
-        String requestBody = String.format(
-                "grant_type=client_credentials&client_id=%s&client_secret=%s",
-                clientId, clientSecret
-        );
+    private String getAccessToken() {
+        try {
+            String requestBody = String.format("grant_type=client_credentials&client_id=%s&client_secret=%s", clientId, clientSecret);
 
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(jwtUri))
-                .header("Content-Type", "application/x-www-form-urlencoded")
-                .POST(HttpRequest.BodyPublishers.ofString(requestBody))
-                .build();
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(jwtUri))
+                    .header("Content-Type", "application/x-www-form-urlencoded")
+                    .POST(HttpRequest.BodyPublishers.ofString(requestBody))
+                    .build();
 
-        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
-        if (response.statusCode() != 200)
-            throw new RuntimeException("Failed to get access token: " + response.body());
+            if (response.statusCode() != 200)
+                throw new RuntimeException("Failed to get access token: " + response.body());
 
-        JsonObject json = Json.createReader(new StringReader(response.body())).readObject();
-        return json.getString("access_token");
+            JsonNode node = mapper.readTree(response.body());
+            return node.get("access_token").asText();
+        } catch (Exception e) {
+            log.error(e.getMessage());
+        }
+        return "";
     }
 }
